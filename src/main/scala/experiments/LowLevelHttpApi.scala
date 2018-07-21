@@ -2,7 +2,7 @@ package experiments
 
 import akka.http.scaladsl.model.HttpMethods._
 import akka.http.scaladsl.model._
-import webserver.SyncWebServer
+import webserver.WebServer
 import webserver.WebServer._
 
 object LowLevelHttpApi {
@@ -22,7 +22,7 @@ object LowLevelHttpApi {
   }
 
   def main(args: Array[String]): Unit = {
-    val server: SyncWebServer = new SyncWebServer(interface = "localhost", port = 8080)(requestHandler)
+    val server = new WebServer(interface = "localhost", port = 8080, requestHandler)
     server.start()
   }
 }

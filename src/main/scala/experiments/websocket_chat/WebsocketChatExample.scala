@@ -7,7 +7,7 @@ import akka.http.scaladsl.model.ws.{Message, TextMessage}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.{BroadcastHub, Flow, Keep, MergeHub}
-import webserver.RoutedWebServer
+import webserver.WebServer
 import webserver.WebServer._
 
 import scala.concurrent.Future
@@ -48,6 +48,6 @@ object WebsocketChatExample extends App {
 
   val route = echoRoute ~ websocketChatRoute
 
-  val server = new RoutedWebServer("localhost", 8080)(route)
+  val server = new WebServer("localhost", 8080, route)
   server.start()
 }

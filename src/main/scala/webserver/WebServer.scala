@@ -5,15 +5,43 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.server.Route
 import akka.stream.ActorMaterializer
+import webserver.WebServer._
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.io.StdIn
 
-import WebServer._
+sealed trait BindingHandlerProvider[BindingType] {
+  def create(interface: String, port: Int, binding: BindingType): Future[Http.ServerBinding]
+}
 
-class WebServer(protected val interface: String, protected val port: Int) {
+object BindingHandlerProvider {
+  type AsyncHandler = HttpRequest => Future[HttpResponse]
+  type SyncHandler = HttpRequest => HttpResponse
+}
 
-  val bindingFuture: Future[Http.ServerBinding] = Future.never
+object BindingHandlerProviderInstances {
+
+  import BindingHandlerProvider._
+
+  implicit val routeBindingHandler: BindingHandlerProvider[Route] = new BindingHandlerProvider[Route] {
+    override def create(interface: String, port: Int, binding: Route): Future[Http.ServerBinding] =
+      Http().bindAndHandle(binding, interface, port)
+  }
+
+  implicit val syncBindingHandler: BindingHandlerProvider[SyncHandler] = new BindingHandlerProvider[SyncHandler] {
+    override def create(interface: String, port: Int, binding: SyncHandler): Future[Http.ServerBinding] =
+      Http().bindAndHandleSync(binding, interface, port)
+  }
+
+  implicit val asyncBindingHandler: BindingHandlerProvider[AsyncHandler] = new BindingHandlerProvider[AsyncHandler] {
+    override def create(interface: String, port: Int, binding: AsyncHandler): Future[Http.ServerBinding] =
+      Http().bindAndHandleAsync(binding, interface, port)
+  }
+}
+
+class WebServer[A: BindingHandlerProvider](val interface: String, val port: Int, binding: A) {
+  val bindingFuture: Future[Http.ServerBinding] =
+    implicitly[BindingHandlerProvider[A]].create(interface, port, binding)
 
   def start(): Unit = {
     println(s"Server started on http://$interface:$port/\npress RETURN to terminate...")
@@ -22,27 +50,6 @@ class WebServer(protected val interface: String, protected val port: Int) {
       .flatMap(_.unbind())
       .onComplete(_ => actorSystem.terminate())
   }
-}
-
-class RoutedWebServer(override val interface: String, override val port: Int)
-                     (implicit val route: Route) extends WebServer(interface, port) {
-
-  override val bindingFuture: Future[Http.ServerBinding] =
-    Http().bindAndHandle(route, interface, port)
-}
-
-class AsyncWebServer(override val interface: String, override val port: Int)
-                   (implicit val requestHandler: HttpRequest => Future[HttpResponse]) extends WebServer(interface, port) {
-
-  override val bindingFuture: Future[Http.ServerBinding] =
-    Http().bindAndHandleAsync(requestHandler, interface, port)
-}
-
-class SyncWebServer(override val interface: String, override val port: Int)
-                   (implicit val requestHandler: HttpRequest => HttpResponse) extends WebServer(interface, port) {
-
-  override val bindingFuture: Future[Http.ServerBinding] =
-    Http().bindAndHandleSync(requestHandler, interface, port)
 }
 
 object WebServer {

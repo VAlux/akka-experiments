@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.util.Timeout
 import spray.json.RootJsonFormat
-import webserver.{RoutedWebServer, WebServer}
+import webserver.WebServer
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -55,7 +55,7 @@ object ActorsUsageExample {
   }
 
   def main(args: Array[String]): Unit = {
-    val server: WebServer = new RoutedWebServer(interface = "localhost", port = 8080)(route)
+    val server = new WebServer(interface = "localhost", port = 8080, route)
     server.start()
   }
 }

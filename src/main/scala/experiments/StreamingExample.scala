@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import webserver.{RoutedWebServer, WebServer}
+import webserver.WebServer
 
 import scala.util.Random
 
@@ -27,7 +27,7 @@ object StreamingExample {
   }
 
   def main(args: Array[String]): Unit = {
-    val server: WebServer = new RoutedWebServer(interface = "localhost", port = 8080)(randomRoute)
+    val server = new WebServer(interface = "localhost", port = 8080, randomRoute)
     server.start()
   }
 }
