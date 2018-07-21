@@ -27,6 +27,8 @@ object StreamingExample {
   }
 
   def main(args: Array[String]): Unit = {
+    import webserver.BindingHandlerProviderInstances._
+
     val server = new WebServer(interface = "localhost", port = 8080, randomRoute)
     server.start()
   }

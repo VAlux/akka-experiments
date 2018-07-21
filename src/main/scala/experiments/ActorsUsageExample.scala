@@ -55,6 +55,8 @@ object ActorsUsageExample {
   }
 
   def main(args: Array[String]): Unit = {
+    import webserver.BindingHandlerProviderInstances._
+
     val server = new WebServer(interface = "localhost", port = 8080, route)
     server.start()
   }

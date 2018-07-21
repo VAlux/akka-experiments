@@ -12,7 +12,7 @@ import webserver.WebServer._
 
 import scala.concurrent.Future
 
-object WebsocketChatExample extends App {
+object WebsocketChatExample {
 
   val (chatSink, chatSource) = MergeHub.source[String].toMat(BroadcastHub.sink[String])(Keep.both).run()
 
@@ -22,8 +22,9 @@ object WebsocketChatExample extends App {
     Flow[Message].mapAsync(parallelism = 1) {
       case TextMessage.Strict(content) => Future.successful(content)
       case streamed: TextMessage.Streamed => streamed.textStream.runFold("")(_ ++ _)
+      case _ => Future.never
     }.via(Flow.fromSinkAndSource(chatSink, chatSource))
-     .map[Message](content => TextMessage(content))
+      .map[Message](content => TextMessage(content))
 
   val echoRoute: Route = {
     path("hello") {
@@ -46,8 +47,11 @@ object WebsocketChatExample extends App {
     }
   }
 
-  val route = echoRoute ~ websocketChatRoute
+  def main(args: Array[String]): Unit = {
+    import webserver.BindingHandlerProviderInstances._
 
-  val server = new WebServer("localhost", 8080, route)
-  server.start()
+    val route = echoRoute ~ websocketChatRoute
+    val server = new WebServer("localhost", 8080, route)
+    server.start()
+  }
 }

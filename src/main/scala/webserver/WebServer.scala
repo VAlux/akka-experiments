@@ -14,14 +14,10 @@ sealed trait BindingHandlerProvider[BindingType] {
   def create(interface: String, port: Int, binding: BindingType): Future[Http.ServerBinding]
 }
 
-object BindingHandlerProvider {
-  type AsyncHandler = HttpRequest => Future[HttpResponse]
-  type SyncHandler = HttpRequest => HttpResponse
-}
-
 object BindingHandlerProviderInstances {
 
-  import BindingHandlerProvider._
+  type AsyncHandler = HttpRequest => Future[HttpResponse]
+  type SyncHandler = HttpRequest => HttpResponse
 
   implicit val routeBindingHandler: BindingHandlerProvider[Route] = new BindingHandlerProvider[Route] {
     override def create(interface: String, port: Int, binding: Route): Future[Http.ServerBinding] =
